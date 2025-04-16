@@ -1,16 +1,25 @@
 pipeline {
     agent any
 
+    environment {
+        GIT_REPO = 'https://github.com/hanumanthuNani/my-static-site.git'
+        GIT_CREDENTIALS = 'GitHub-Token' // The ID of the credential you created
+    }
+
     stages {
-        stage('Clone Repo') {
+        stage('Checkout') {
             steps {
-                git credentialsId: 'PERSONAL', url: 'https://github.com/hanumanthuNani/my-static-site.git'
+                script {
+                    // Clone the GitHub repository using the credential
+                    git url: GIT_REPO, credentialsId: GIT_CREDENTIALS
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Build the Docker image
                     sh 'docker build -t my-static-site .'
                 }
             }
@@ -19,9 +28,17 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    sh 'docker stop my-static-site || true'
-                    sh 'docker rm my-static-site || true'
-                    sh 'docker run -d -p 8070:80 --name my-static-site my-static-site'
+                    // Run the Docker container
+                    sh 'docker run -d -p 8080:80 my-static-site'
+                }
+            }
+        }
+
+        stage('Clean Up') {
+            steps {
+                script {
+                    // Stop and remove the container after deployment
+                    sh 'docker ps -q --filter ancestor=my-static-site | xargs docker stop | xargs docker rm'
                 }
             }
         }
