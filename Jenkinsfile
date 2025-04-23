@@ -2,24 +2,33 @@ pipeline {
     agent any
 
     environment {
-        // Define Docker Image Name and Tag
-        DOCKER_IMAGE_NAME = 'my-web-app'
-        DOCKER_IMAGE_TAG = 'latest'
+        GITHUB_REPO = 'https://github.com/hanumanthuNani/my-static-site'
+        GITHUB_TOKEN = credentials('github-token') // GitHub token Jenkins credential
+        BRANCH = 'main'
+        DEPLOY_PATH = 'E:\\my_website' // Folder on Jenkins where your website files and Docker are located
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the project code from your Git repository
-                checkout scm
+                script {
+                    // Optional: Only use this if you want to clone the GitHub repo again
+                    // Otherwise, this stage can be removed as files already exist in the workspace
+                    echo 'Checking out repository...'
+                    git url: GITHUB_REPO, branch: BRANCH, credentialsId: 'github-token'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build Docker image from Dockerfile
-                    sh 'docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .'
+                    // Navigate to the folder where Docker files are located
+                    dir(DEPLOY_PATH) {
+                        echo 'Building Docker image...'
+                        // Build Docker image using the Dockerfile in the folder
+                        sh 'docker build -t my-static-site .'
+                    }
                 }
             }
         }
@@ -27,26 +36,33 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Run the Docker container (map port 8080 on the host to port 80 inside the container)
-                    sh 'docker run -d -p 8080:80 ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}'
+                    echo 'Running Docker container...'
+                    // Run the Docker container (adjust the port if necessary)
+                    // If you need to expose a specific port or mount volumes, modify the command accordingly
+                    sh 'docker run -d -p 8080:80 --name my-static-site-container my-static-site'
                 }
             }
         }
 
-        stage('Clean Up') {
+        stage('Deploy') {
             steps {
                 script {
-                    // Clean up any stopped containers (optional)
-                    sh 'docker ps -q | xargs docker stop | xargs docker rm'
+                    echo 'Deploying Dockerized site...'
+                    // This is where you would deploy to another server or platform if needed
+                    // For example, you could push to Docker Hub or use SSH to deploy to a remote server
+                    // Example: docker push to Docker Hub (if you're using Docker Hub)
+                    // sh 'docker push my-static-site:latest'
                 }
             }
         }
     }
 
     post {
-        always {
-            // Clean up the Docker image after the job completes
-            sh 'docker rmi ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}'
+        success {
+            echo 'Dockerized website deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
         }
     }
 }
