@@ -42,7 +42,7 @@ pipeline {
                 script {
                     echo 'Running Docker container...'
                     // Run the Docker container, ensuring ports are exposed correctly
-                    sh 'docker run -d -p 8080:80 --name my-static-site-container my-static-site'
+                    sh 'docker run -d -p 70:80 --name my-static-site-container my-static-site'
                 }
             }
         }
