@@ -12,6 +12,8 @@ pipeline {
             steps {
                 script {
                     echo 'Checking out repository...'
+                    // Ensure the directory is clean and repository is cloned
+                    deleteDir() // Deletes the workspace if it exists
                     git url: GITHUB_REPO, branch: BRANCH, credentialsId: 'github-token'
                 }
             }
