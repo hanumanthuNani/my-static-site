@@ -12,8 +12,6 @@ pipeline {
             steps {
                 script {
                     echo 'Checking out repository...'
-                    // Ensure the directory is clean and repository is cloned
-                    deleteDir() // Deletes the workspace if it exists
                     git url: GITHUB_REPO, branch: BRANCH, credentialsId: 'github-token'
                 }
             }
@@ -33,7 +31,6 @@ pipeline {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    // Ensure Dockerfile exists in the repository root
                     sh 'docker build -t my-static-site .'
                 }
             }
@@ -42,8 +39,8 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    echo 'Running Docker container...'
-                    // Run the Docker container, ensuring ports are exposed correctly
+                    echo 'Running Docker container on port 70...'
+                    // Run the Docker container, mapping port 70 (host) to 80 (container)
                     sh 'docker run -d -p 70:80 --name my-static-site-container my-static-site'
                 }
             }
